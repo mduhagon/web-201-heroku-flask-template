@@ -1,7 +1,16 @@
 click==8.0.3
 Flask==2.0.2
+Flask-Cors==3.0.10
+Flask-SQLAlchemy==2.5.1
+GeoAlchemy2==0.10.2
+greenlet==1.1.2
 gunicorn==20.1.0
 itsdangerous==2.0.1
 Jinja2==3.0.3
 MarkupSafe==2.0.1
+packaging==21.3
+psycopg2==2.9.3
+pyparsing==3.0.6
+six==1.16.0
+SQLAlchemy==1.4.29
 Werkzeug==2.0.2
