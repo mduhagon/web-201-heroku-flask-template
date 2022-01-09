@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Home</title>
+  <script src="{{ url_for('static', filename='map.js') }}"></script>
+</head>
+<body>
+    <!--Sometimes the google map will not render / the page is blank. Giving the map div a height prop and putting it 
+        inside another HTML element with fixed size prevents that -->
+    <div id="conainer" style="width: 600px; height: 600px;">
+        <!--Google map-->
+        <div id="map" style="height: 100%;"></div>
+    </div>
+
+    <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key={{map_key}}&callback=initMap&libraries=geometry&v=weekly"
+      async
+    ></script>
+</body>
+</html>

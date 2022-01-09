@@ -1,7 +1,10 @@
 import os
-from flask import Flask, request, abort, jsonify
+import sys
+from flask import Flask, request, abort, jsonify, render_template, url_for
 from flask_cors import CORS
-from models import setup_db, Movie, db_drop_and_create_all
+import traceback
+from models import setup_db, SampleLocation, db_drop_and_create_all
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
@@ -9,23 +12,57 @@ def create_app(test_config=None):
     CORS(app)
     """ uncomment at the first time running the app """
     db_drop_and_create_all()
+
     @app.route('/', methods=['GET'])
     def home():
-        return jsonify({'message': 'Hello,hello, World!'})
-    @app.route("/movies")
-    def get_movies():
+        return render_template(
+            'map.html', 
+            map_key=os.getenv('GOOGLE_MAPS_API_KEY', 'GOOGLE_MAPS_API_KEY_WAS_NOT_SET?!')
+        )
+
+    @app.route("/api/store_item")
+    def store_item():
         try:
-            movies = Movie.query.order_by(Movie.release_date).all()
-            movie=[]
-            movie=[mov.release_date for mov in movies]
+            latitude = float(request.args.get('lat'))
+            longitude = float(request.args.get('lng'))
+            description = request.args.get('description')
+
+            location = SampleLocation(
+                description=description,
+                geom=SampleLocation.point_representation(latitude=latitude, longitude=longitude)
+            )   
+            location.insert()
+
             return jsonify(
                 {
                     "success": True,
-                    "movie name": movie
+                    "location": location.to_dict()
                 }
             ), 200
         except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            app.logger.error(traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2))
             abort(500)
+
+    @app.route("/api/get_items_in_radius")
+    def get_items_in_radius():
+        try:
+            latitude = float(request.args.get('lat'))
+            longitude = float(request.args.get('lng'))
+            radius = int(request.args.get('radius'))
+            
+            locations = SampleLocation.get_items_within_radius(latitude, longitude, radius)
+            return jsonify(
+                {
+                    "success": True,
+                    "results": locations
+                }
+            ), 200
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            app.logger.error(traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2))
+            abort(500)
+
     @app.errorhandler(500)
     def server_error(error):
         return jsonify({
@@ -33,7 +70,9 @@ def create_app(test_config=None):
             "error": 500,
             "message": "server error"
         }), 500
+
     return app
+
 app = create_app()
 if __name__ == '__main__':
     port = int(os.environ.get("PORT",5000))
