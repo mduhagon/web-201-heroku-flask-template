@@ -308,7 +308,7 @@ In a nutshell, this process will look like this:
 
 ```
 git status
-``
+```
 
 2. Use git add to stage all the above changes that should go to your repo (you may need to do this for multiple paths or you can also list many together)
 
