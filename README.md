@@ -26,7 +26,9 @@ If you are running on a Mac or some different setup, some stuff might be slightl
 - Git installed in your machine so you can execute git commands
 - Python installed in your machine so you can execute Python commands and run Pyton scripts. Make sure you have version **3.6 or superior**. You also need to use pip, can't remember if that needed to be installed separately.
 - A Google Maps API Key
-
+- A local installation of Postgres: The instructions given here will allow you to connect to the DB hosted in Heroku, even when you are running locally. Regardless, there are a few steps that may not work if you have no local Postgres installed. These are: 
+  - the install of dependency `psycopg2` (you can workaround this one by installing `psycopg2-binary` instead)
+  - Connecting to the Heroku db by using `heroku pg:psql`. To ensure this step will work fine, try executing the command `psql` from your command line. If the command is found, even when you see some error in connection to server or similar, you are OK. Only if the command is not found / recognized, then you might need to add this to your PATH. 
 
 ## Initializing the Project
 
@@ -203,6 +205,7 @@ To run the sample code you copied from this template, two environment variables 
 - GOOGLE_MAPS_API_KEY: You need to get this for yourself. It will be sent to the Google Maps API to render the map on the initial page of the sample app.
 
 So, before running the flask app locally, set the two environment variables like this:
+#### These commands will work on Ubuntu, and maybe also on Mac:
 
 The first export requires you are authenticated with the heroku cli, so if you have not done that resently, run ```sudo heroku login``` first. Then run:
 Also! replace 'postgresql-parallel-63698' with the name of your database! You have looked for that in the step above
@@ -212,17 +215,64 @@ export DATABASE_URL=`sudo heroku pg:credentials:url postgresql-parallel-63698 | 
 export GOOGLE_MAPS_API_KEY=ssdfsdfsAAqfdfsuincswdfgcxhmmjzdfgsevfh
 ```
 
+#### For Windows or in case you do not have sed installed
+
+The command for exporting the DATABASE_URL above is using some additional utility (sed) to get the value directly from the output from the heroku client query. This is useful, but maybe you do not have sed, or you are running these commands on Windows.
+
+In that case you can do a little bit more manual work to get the same result: 
+
+First call Heroku to get the db URL: 
+
+```
+sudo heroku pg:credentials:url postgresql-parallel-63698
+```
+
+OR:
+
+```
+sudo heroku pg:credentials:url postgresql-parallel-63698 -a mduhagon-web-201-heroku-flask
+```
+Again, you need to replace 'postgresql-parallel-63698' with the name of your own database. Also, if Heroku complains about `Error: Missing required flag: -a, --app APP  app to run command against ` then add the flag -a` like above but using your own app name.
+
+This will output something like this:
+
+```
+$ sudo heroku pg:credentials:url postgresql-parallel-63698
+Connection information for default credential.
+Connection info string:
+   "dbname=xxxxxxxxxxxxxx host=ec2-XXX-XXX-XXX-XXX.compute-X.amazonaws.com port=XXXX user=XXXXXXX password=XXXXXXXXXXXXXX sslmode=XXXXXX"
+Connection URL:
+   postgres://XXXXXXX:YYYYYYYYYYYYYYYYYYYYYYY@ec2-XXX-XXX-XXX-XXX.compute-X.amazonaws.com:XXXX/XXXXXXXXXXXXXXX
+```
+
+What we want to set as `DATABASE_URL` is the value shown as Connection URL, that starts with 'postgres://'
+You can copy that value from the output and use it to set the variable. 
+
+In Windows, that would look like this:
+
+```
+SET DATABASE_URL=postgres://XXXXXXX:YYYYYYYYYYYYYYYYYYYYYYY@ec2-XXX-XXX-XXX-XXX.compute-X.amazonaws.com:XXXX/XXXXXXXXXXXXXXX
+SET GOOGLE_MAPS_API_KEY=ssdfsdfsAAqfdfsuincswdfgcxhmmjzdfgsevfh
+```
+
 The value for GOOGLE_MAPS_API_KEY is just a dummy value, you need to get the real api key value from your Google Apps console and use that value instead.
 Remember never to commit this API key to your repo because that is public and the key could get exploited / used by other people. Use of Google Maps API costs money after some limits, so be careful.
 
+It will help to have these commands handy, you will need to rerun them every time you start working on your app locally on a new instance of your command line.
+
 If you want to verify the values of the env variables, use:
 
+on Linux / Mac:
 ```
 echo $DATABASE_URL
 echo $GOOGLE_MAPS_API_KEY
 ```
 
-It will help to have these commands handy, you will need to rerun them every time you start working on your app locally on a new instance of your command line.
+on Windows:
+```
+echo %DATABASE_URL%
+echo %GOOGLE_MAPS_API_KEY%
+```
 
 Finally, to run the app:
 
