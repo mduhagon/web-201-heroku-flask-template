@@ -53,14 +53,26 @@ source venv/bin/activate
 We want to get a bunch of libraries to get us started:
 (you may install these one by one in case some error / warning comes)
 
+You may or may not need to install the MySql client first.
+Take a closer look here if you try to install 
+
 ```
 pip3 install Flask
 pip3 install gunicorn
-pip3 install psycopg2
 pip3 install Flask-SQLAlchemy
-pip3 install Geoalchemy2
 pip3 install shapely
 pip3 install flask_cors
+pip3 install flask-mysqldb
+```
+
+If something fail while installing flask-mysqldb
+take a closer look at this [guide](https://pypi.org/project/Flask-MySQLdb/), you might need to install
+the mysqlclient first.
+
+Needed to install this in Ubuntu:
+
+```
+apt-get install libmysqlclient-dev python-dev
 ```
 
 More info about installing Flask can be found on their installation guide: https://flask.palletsprojects.com/en/2.0.x/installation/
