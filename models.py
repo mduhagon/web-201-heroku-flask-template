@@ -13,7 +13,7 @@ setup_db(app):
     binds a flask application and a SQLAlchemy service
 '''
 def setup_db(app):
-    database_path = os.getenv('JAWSDB_URL', 'JAWSDB_URL_WAS_NOT_SET?!')
+    database_path = os.getenv('DATABASE_URL', 'DATABASE_URL_WAS_NOT_SET?!')
 
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

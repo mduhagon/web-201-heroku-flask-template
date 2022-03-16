@@ -120,7 +120,7 @@ git remote add origin https://github.com/mduhagon/web-201-heroku-flask-template.
 git push -u origin main
 ```
 
-## Setting up the Heroku cli and creating a Heroku app with a Posgres DB
+## Setting up the Heroku cli and creating a Heroku app ~~with a Posgres DB~~
 
 [Setup a Heroku account](https://signup.heroku.com/) if you don't have one already.
 
@@ -189,7 +189,7 @@ To run the sample code you copied from this template, two environment variables 
 So, before running the flask app locally, set the two environment variables like this:
 #### For Ubuntu / Mac:
 
-Ask me for the value you need to use in DATABASE_URL, and replace it
+Ask mentor for the value you need to use in DATABASE_URL, and replace it
 for the dummy value mysql://XXXXXXXXX.... in the bellow command
 
 The second env variable you need to set is your Google maps key, 
@@ -265,7 +265,9 @@ Now all your code is up-to-date with GitHub. This is important because you push 
 
 Before deploy, a small extra step. Remember we need 2 environment variables for the sample code to work. DATABASE_URL is by default provided by Heroku because we have a DB attached to our app. The second env variable is something we define, so we need to set it manually as a Heroku config variable:
 
+(here again for DATABASE_URL you need to use the real value provided by the mentor)
 ```
+sudo heroku config:set DATABASE_URL=mysql://XXXXXXXXX:YYYYYYYYY@ZZZZZZZZZZZ.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/KKKKKKKKK
 sudo heroku config:set GOOGLE_MAPS_API_KEY=ssdfsdfsAAqfdfsuincswdfgcxhmmjzdfgsevfh
 ```
 
