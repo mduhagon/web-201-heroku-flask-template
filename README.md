@@ -154,58 +154,30 @@ Logged in as mduhagon@gmail.com
 
 but with your username of course. In order to run any command with the heroku cli to control your apps, deploy, etc, you first need to do the above login step. After a while the authentication expires, so if at some point you run a heroku client command and it starts asking for username / pass, rerun the login command and you should be back in business.
 
-Now we will create a new app inside your Heroku account. For that you need a unique name. I chose 'mduhagon-web-201-heroku-flask' for mine. Wherever you see this name in my commands, replace it with **your app name**.
+Now we will create a new app inside your Heroku account. For that you need a unique name. I chose 'mduhagon-web-201-flask-mysql' for mine. Wherever you see this name in my commands, replace it with **your app name**.
 
 To create the app, run:
 
 ```
-heroku create mduhagon-web-201-heroku-flask
+heroku create mduhagon-web-201-flask-mysql
 ```
 
 if it works, you will see an output like this:
 
 ```
-Creating ⬢ mduhagon-web-201-heroku-flask... done
-https://mduhagon-web-201-heroku-flask.herokuapp.com/ | https://git.heroku.com/mduhagon-web-201-heroku-flask.git
+Creating ⬢ mduhagon-web-201-flask-mysql... done
+https://mduhagon-web-201-flask-mysql.herokuapp.com/ | https://git.heroku.com/mduhagon-web-201-flask-mysql.git
 ```
 
-Now, we want to add a PostGres database to our app (hobby-dev is the free version):
+Now, we want to add a MySql database to our app, but! 
+There are a few limitations with the MySql DBs that we could install via Heroku:
 
-```
-sudo heroku addons:create heroku-postgresql:hobby-dev
-```
+- ClearDB will give you a MySQL database with version 5.6, this is rather old and the support for Geolocation functions is super poor
+- JAWSDB was almost good! It gives you a MySQL db with version 8, has all the functions we need, but... they seem to have limited some stuff because they do not have SRIDs in the sys schema...
 
-You should see an output similar to this:
-
-```
-Creating heroku-postgresql:hobby-dev on ⬢ mduhagon-web-201-heroku-flask... free
-Database has been created and is available
- ! This database is empty. If upgrading, you can transfer
- ! data from another database with pg:copy
-Created postgresql-parallel-63698 as DATABASE_URL
-Use heroku addons:docs heroku-postgresql to view documentation
-```
-
-As the last step in setting up our database, we want to install PostGis, the extendion library to deal with geolocated data.
-To be able to do this we need our database name, in my example that is 'postgresql-parallel-63698' (notice that is mentioned on the output when we created the db, otherwise you can see the db name from the Heroku web console)
-
-```
-sudo heroku pg:psql postgresql-parallel-63698
-```
-
-This will open a command line for you to run commands on your database. Run the following:
-
-```
-CREATE EXTENSION postgis;
-```
-
-You should see the following output if the install went fine:
-
-```
-CREATE EXTENSION
-```
-
-Use 'exit' to get out of the db command line.
+So, as a quick workaround, I can provide a remote DB
+that will live in the AWS account I own, and you can use it.
+You will have to ask me for the REAL connection string, and then use it in the following steps
 
 ## Running the app locally
 
@@ -213,78 +185,38 @@ First, you want to get the app running locally, because if something did not wor
 
 To run the sample code you copied from this template, two environment variables need to be set:
 
-- DATABASE_URL: this is the connection string for the PostGres database. Because the DB is hosted by Heroku, it also defines the user / password / etc for us. And these are 'ephemeral' credentials that heroku will rotate periodically to make your db more secure. We don't know how often the credentials change, but we should assume they will, so no hardcoding these anywhere. To get the proper value you can use the heroku cli, and below you get a bit of command line magic to directly put that into a local env variable.
+- DATABASE_URL: this is the connection string for the database. In this setup it will not come from Heroku, we need to set it locally and also tell Heroku what is the proper value
 - GOOGLE_MAPS_API_KEY: You need to get this for yourself. It will be sent to the Google Maps API to render the map on the initial page of the sample app.
 
 So, before running the flask app locally, set the two environment variables like this:
-#### These commands will work on Ubuntu, and maybe also on Mac:
+#### For Ubuntu / Mac:
 
-The first export requires you are authenticated with the heroku cli, so if you have not done that resently, run ```sudo heroku login``` first. Then run:
-Also! replace 'postgresql-parallel-63698' with the name of your database! You have looked for that in the step above
+Ask me for the value you need to use in DATABASE_URL, and replace it
+for the dummy value mysql://XXXXXXXXX.... in the bellow command
+
+The second env variable you need to set is your Google maps key, 
+so the map within the sample app can be loaded:
 
 ```
-export DATABASE_URL=`sudo heroku pg:credentials:url postgresql-parallel-63698 | sed -n 5p | sed -r 's/\s+//g'`
+export DATABASE_URL=mysql://XXXXXXXXX:YYYYYYYYY@ZZZZZZZZZZZ.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/KKKKKKKKK
 export GOOGLE_MAPS_API_KEY=ssdfsdfsAAqfdfsuincswdfgcxhmmjzdfgsevfh
 ```
 
-#### For Windows or in case you do not have sed installed
-
-The command for exporting the DATABASE_URL above is using some additional utility (sed) to get the value directly from the output from the heroku client query. This is useful, but maybe you do not have sed, or you are running these commands on Windows.
-
-In that case you can do a little bit more manual work to get the same result: 
-
-First call Heroku to get the db URL: 
+If you did this step correctly, when you execute these commands,
+You should see the values you set via export:
 
 ```
-sudo heroku pg:credentials:url postgresql-parallel-63698
+> echo $DATABASE_URL
+mysql://XXXXXXXXX:YYYYYYYYY@ZZZZZZZZZZZ.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/KKKKKKKKK
+
+> echo $GOOGLE_MAPS_API_KEY
+ssdfsdfsAAqfdfsuincswdfgcxhmmjzdfgsevfh
 ```
 
-OR:
+#### For Windows
 
-```
-sudo heroku pg:credentials:url postgresql-parallel-63698 -a mduhagon-web-201-heroku-flask
-```
-Again, you need to replace 'postgresql-parallel-63698' with the name of your own database. Also, if Heroku complains about `Error: Missing required flag: -a, --app APP  app to run command against ` then add the flag -a` like above but using your own app name.
+(to be done later)
 
-This will output something like this:
-
-```
-$ sudo heroku pg:credentials:url postgresql-parallel-63698
-Connection information for default credential.
-Connection info string:
-   "dbname=xxxxxxxxxxxxxx host=ec2-XXX-XXX-XXX-XXX.compute-X.amazonaws.com port=XXXX user=XXXXXXX password=XXXXXXXXXXXXXX sslmode=XXXXXX"
-Connection URL:
-   postgres://XXXXXXX:YYYYYYYYYYYYYYYYYYYYYYY@ec2-XXX-XXX-XXX-XXX.compute-X.amazonaws.com:XXXX/XXXXXXXXXXXXXXX
-```
-
-What we want to set as `DATABASE_URL` is the value shown as Connection URL, that starts with 'postgres://'
-You can copy that value from the output and use it to set the variable. 
-
-In Windows, that would look like this:
-
-```
-SET DATABASE_URL=postgres://XXXXXXX:YYYYYYYYYYYYYYYYYYYYYYY@ec2-XXX-XXX-XXX-XXX.compute-X.amazonaws.com:XXXX/XXXXXXXXXXXXXXX
-SET GOOGLE_MAPS_API_KEY=ssdfsdfsAAqfdfsuincswdfgcxhmmjzdfgsevfh
-```
-
-The value for GOOGLE_MAPS_API_KEY is just a dummy value, you need to get the real api key value from your Google Apps console and use that value instead.
-Remember never to commit this API key to your repo because that is public and the key could get exploited / used by other people. Use of Google Maps API costs money after some limits, so be careful.
-
-It will help to have these commands handy, you will need to rerun them every time you start working on your app locally on a new instance of your command line.
-
-If you want to verify the values of the env variables, use:
-
-on Linux / Mac:
-```
-echo $DATABASE_URL
-echo $GOOGLE_MAPS_API_KEY
-```
-
-on Windows:
-```
-echo %DATABASE_URL%
-echo %GOOGLE_MAPS_API_KEY%
-```
 
 Finally, to run the app:
 
