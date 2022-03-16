@@ -8,7 +8,8 @@ This template aims to be a starting point for you to follow when creating your o
 It will ensure a couple good things:
 - You setup a GitHub repo for your project right from the start. If you need to share your code, fellow students and mentors can see it on GitHub or fork it and run it too!
 - You setup a Heroku account and can deploy your project there, also from the start.
-- By using a database provided / hosted by Heroku, you do not need to install a DB engine or plugins locally on your machine.
+- ~~By using a database provided / hosted by Heroku, you do not need to install a DB engine or plugins locally on your machine.~~
+- While Heroku does allow installing a MySql DB, neither of the checked options meet all requirements to run the geolocation logic we want. So this guide is relying on you using a remote DB that will be provided/hosted by the mentor
 - The template includes sample code to show a Google Map and some markers in it
 - The template also includes a sample model with some prestored locations, just to test out the map functionality and make sure PostGis extension works too.
 
@@ -26,9 +27,6 @@ If you are running on a Mac or some different setup, some stuff might be slightl
 - Git installed in your machine so you can execute git commands
 - Python installed in your machine so you can execute Python commands and run Pyton scripts. Make sure you have version **3.6 or superior**. You also need to use pip, can't remember if that needed to be installed separately.
 - A Google Maps API Key
-- A local installation of Postgres: The instructions given here will allow you to connect to the DB hosted in Heroku, even when you are running locally. Regardless, there are a few steps that may not work if you have no local Postgres installed. These are: 
-  - the install of dependency `psycopg2` (you can workaround this one by installing `psycopg2-binary` instead)
-  - Connecting to the Heroku db by using `heroku pg:psql`. To ensure this step will work fine, try executing the command `psql` from your command line. If the command is found, even when you see some error in connection to server or similar, you are OK. Only if the command is not found / recognized, then you might need to add this to your PATH. 
 
 ## Initializing the Project
 
