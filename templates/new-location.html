@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block head %}
+    <script src="{{ url_for('static', filename='new-location.js') }}"></script>
+{% endblock %}
+{% block body %}
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">New Location</legend>
+            {% if form.coord_latitude.errors or  form.coord_longitude.errors %}
+            <div class="alert alert-danger" role="alert">
+                Make sure to select a valid point in the map!
+            </div>
+            {% endif %}
+            <div class="form-group">
+                {{ form.description.label(class="form-control-label") }}
+                {% if form.description.errors %}
+                    {{ form.description(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.description.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.description(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.lookup_address.label(class="form-control-label") }}
+                {% if form.lookup_address.errors %}
+                    {{ form.lookup_address(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.lookup_address.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.lookup_address(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div id="preview" style="width: 100%; height: 400px">
+            <div id="map" style="height: 100%;"></div>
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+    </form>
+
+    <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key={{map_key}}&callback=initAutocomplete&libraries=places&v=weekly&channel=2"
+    async
+    ></script>
+{% endblock %}

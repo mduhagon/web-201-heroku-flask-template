@@ -1,8 +1,9 @@
 import os
 import sys
-from flask import Flask, request, abort, jsonify, render_template, url_for
+from flask import Flask, request, abort, jsonify, render_template, url_for, flash, redirect
 from flask_cors import CORS
 import traceback
+from forms import NewLocationForm
 from models import setup_db, SampleLocation, db_drop_and_create_all
 
 def create_app(test_config=None):
@@ -10,6 +11,10 @@ def create_app(test_config=None):
     app = Flask(__name__)
     setup_db(app)
     CORS(app)
+
+    SECRET_KEY = os.urandom(32)
+    app.config['SECRET_KEY'] = SECRET_KEY
+
     """ uncomment at the first time running the app """
     db_drop_and_create_all()
 
@@ -19,6 +24,30 @@ def create_app(test_config=None):
             'map.html', 
             map_key=os.getenv('GOOGLE_MAPS_API_KEY', 'GOOGLE_MAPS_API_KEY_WAS_NOT_SET?!')
         )
+
+    @app.route("/new-location", methods=['GET', 'POST'])
+    def new_location():
+        form = NewLocationForm()
+
+        if form.validate_on_submit():            
+            latitude = float(form.coord_latitude.data)
+            longitude = float(form.coord_longitude.data)
+            description = form.description.data
+
+            location = SampleLocation(
+                description=description,
+                geom=SampleLocation.point_representation(latitude=latitude, longitude=longitude)
+            )   
+            location.insert()
+
+            flash(f'New location created!', 'success')
+            return redirect(url_for('home'))
+
+        return render_template(
+            'new-location.html',
+            form=form,
+            map_key=os.getenv('GOOGLE_MAPS_API_KEY', 'GOOGLE_MAPS_API_KEY_WAS_NOT_SET?!')
+        ) 
 
     @app.route("/api/store_item")
     def store_item():
