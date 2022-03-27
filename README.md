@@ -61,6 +61,7 @@ pip3 install Flask-SQLAlchemy
 pip3 install Geoalchemy2
 pip3 install shapely
 pip3 install flask_cors
+pip3 install flask_wtf
 ```
 
 More info about installing Flask can be found on their installation guide: https://flask.palletsprojects.com/en/2.0.x/installation/
