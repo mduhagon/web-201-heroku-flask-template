@@ -25,6 +25,16 @@ def create_app(test_config=None):
             map_key=os.getenv('GOOGLE_MAPS_API_KEY', 'GOOGLE_MAPS_API_KEY_WAS_NOT_SET?!')
         )
 
+    @app.route('/detail', methods=['GET'])
+    def detail():
+        location_id = float(request.args.get('id'))
+        item = SampleLocation.query.get(location_id)
+        return render_template(
+            'detail.html', 
+            item=item,
+            map_key=os.getenv('GOOGLE_MAPS_API_KEY', 'GOOGLE_MAPS_API_KEY_WAS_NOT_SET?!')
+        )            
+
     @app.route("/new-location", methods=['GET', 'POST'])
     def new_location():
         form = NewLocationForm()
