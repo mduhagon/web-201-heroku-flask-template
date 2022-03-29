@@ -134,6 +134,27 @@ function clearMarkers() {
   selectedMarker = null;
 }
 
+function searchAddressSubmit() {
+  console.log('searchAddressSubmit');
+
+  const address = document.getElementById("search_address").value;
+  geocoder.geocode({ address: address }, (results, status) => {
+    if (status === "OK") {
+      // If you want to provide feedback to the user on the map page:
+      //document.getElementById('addressHelpBlock').innerHTML="Perfect! Here are the results near you:";
+      map.setZoom(15);
+      map.setCenter(results[0].geometry.location);
+    } else {
+      console.log("Geocode was not successful for the following reason: " + status);
+      // If you want to provide feedback to the user on the map page:
+      //document.getElementById('addressHelpBlock').innerHTML="Sorry! That search did not work, try again!";
+    }
+  });
+
+  //prevent refresh
+  return false;
+}
+
 // this is just for debugging purposes!
 // To be able to better understand if the radius in which I search for 
 // teachers is well adjussted to the level of zoom of the map, 

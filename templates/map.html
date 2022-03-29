@@ -1,19 +1,32 @@
 {% extends "layout.html" %}
 {% block head %}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}" />
   <script src="{{ url_for('static', filename='map.js') }}"></script>
 {% endblock %}
 {% block body %}
-       <a href="{{ url_for('new_location') }}">New Location</a>
-      <!--Sometimes the google map will not render / the page is blank. Giving the map div a height prop and putting it 
-        inside another HTML element with fixed size prevents that -->
-      <div id="conainer" style="width: 600px; height: 600px;">
-          <!--Google map-->
-          <div id="map" style="height: 100%;"></div>
-      </div>
+  <nav class="navbar navbar-dark bg-dark">
+    <span class="navbar-brand mb-0 h1">Navbar</span>
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('new_location') }}">New Location</a>
+      </li>
+    </ul>
+    <form method="GET" action="" onsubmit="return searchAddressSubmit()" class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" id="search_address" type="search" placeholder="Search near..." aria-label="Search near">
+      <button class="btn btn-info my-2 my-sm-0" type="submit">Search</button>
+    </form>   
+  </nav>
+
+  <!--Sometimes the google map will not render / the page is blank. Giving the map div a height prop and putting it 
+    inside another HTML element with fixed size prevents that -->
+  <div style="height: 600px;">
+      <!--Google map-->
+      <div id="map" style="height: 100%;"></div>
+  </div>
   
-      <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
-      <script
-        src="https://maps.googleapis.com/maps/api/js?key={{map_key}}&callback=initMap&libraries=geometry&v=weekly"
-        async
-      ></script>
+  <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key={{map_key}}&callback=initMap&libraries=geometry&v=weekly"
+    async
+  ></script>
 {% endblock %}
