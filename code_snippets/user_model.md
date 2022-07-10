@@ -129,7 +129,47 @@ You need to do this procedure of executing ```db_drop_and_create_all()``` again,
 Content for the Registration form class (you add it to ``forms.py``):
 
 ```
+class RegistrationForm(FlaskForm):
+    fullname = StringField(
+        'Full Name', 
+        validators=
+            [DataRequired(), 
+            Length(min=2, max=200)
+        ]
+    )
 
+    username = StringField(
+        'Username / Display Name', 
+        validators=
+            [DataRequired(), 
+            Length(min=2, max=20)
+        ]
+    )
+
+    email = StringField(
+        'Email',
+        validators=[
+            DataRequired(), 
+            Email()
+        ]
+    )
+
+    password = PasswordField(
+        'Password',
+        validators=[
+            DataRequired()
+        ]
+    )
+
+    confirm_password = PasswordField(
+        'Confirm Password',
+        validators=[
+            DataRequired(),
+            EqualTo('password')
+        ]
+    )
+
+    submit = SubmitField('Sign up')  
 
 ```
 
