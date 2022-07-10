@@ -61,25 +61,44 @@ In the end the lines added to requirements.txt should be:
 
 ```
 Flask-Login==0.6.1
+dnspython==2.2.1
+email-validator==1.2.1
+idna==3.3
 ```
-(actual version number might change over time)
+(actual version numbers might change over time)
 
 ### Step 2 - Create the User class
 
 The class is added to your ``models.py`` file:
 
 ```
-class User(db.Model, UserMixin):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
+    full_name = db.Column(db.String(200), nullable=False) # i.e Hanna Barbera
+    display_name = db.Column(db.String(20), unique=True, nullable=False) # i.e hanna_25
+    email = db.Column(db.String(120), unique=True, nullable=False) # i.e hanna@hanna-barbera.com
+    password = db.Column(db.String(32), nullable=False) 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
+    @classmethod
+    def get_by_id(cls, user_id):
+        return cls.query.filter_by(id=user_id).first()
+        
     def __repr__(self):
-        return f"User({self.id}, '{self.name}', '{self.email}')"  
+        return f"User({self.id}, '{self.display_name}', '{self.email}')"      
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()   
 ```
 
 To make some references work you need to add the following to the imports ection on the top of the file:
@@ -103,7 +122,7 @@ and verify a new table was created. (TODO: make a step-by-step guide for this)
 
 Once the Flask app started and the DB is recreated you can comment back the method ```db_drop_and_create_all()```.
 If you do more changes later, for example add some attribute for the User class, modify the SampleLocation class, etc. 
-You need to do this procedure of executing ```db_drop_and_create_all()``` again, otherwise the changes will not be 'impacted into' or xecuted in the DB.
+You need to do this procedure of executing ```db_drop_and_create_all()``` again, otherwise the changes will not be 'impacted into' or executed in the DB.
 
 ### Step 3 - Create a registration Form and page
 
@@ -122,12 +141,84 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo
 
 You need a new template file, called ``registration.html``:
 ```
+class RegistrationForm(FlaskForm):
+    fullname = StringField(
+        'Full Name', 
+        validators=
+            [DataRequired(), 
+            Length(min=2, max=200)
+        ]
+    )
 
+    username = StringField(
+        'Username / Display Name', 
+        validators=
+            [DataRequired(), 
+            Length(min=2, max=20)
+        ]
+    )
+
+    email = StringField(
+        'Email',
+        validators=[
+            DataRequired(), 
+            Email()
+        ]
+    )
+
+    password = PasswordField(
+        'Password',
+        validators=[
+            DataRequired()
+        ]
+    )
+
+    confirm_password = PasswordField(
+        'Confirm Password',
+        validators=[
+            DataRequired(),
+            EqualTo('password')
+        ]
+    )
+
+    submit = SubmitField('Sign up')  
+```
+
+You need to modify / add some imports at the top of the page:
+```
+from wtforms import StringField, SubmitField, HiddenField, PasswordField, BooleanField
+from wtforms.validators import DataRequired, Length, Email, EqualTo
 ```
 
 You need to add the code to handle this new registration page / route in your ``app.py``:
 ```
+   @app.route("/register", methods=['GET', 'POST'])
+    def register():
+        # Sanity check: if the user is already authenticated then go back to home page
+        # if current_user.is_authenticated:
+        #     return redirect(url_for('home'))
 
+        # Otherwise process the RegistrationForm from request (if it came)
+        form = RegistrationForm()
+        if form.validate_on_submit():
+            # hash user password, create user and store it in database
+            hashed_password = hashlib.md5(form.password.data.encode()).hexdigest()
+            user = User(
+                full_name=form.fullname.data,
+                display_name=form.username.data, 
+                email=form.email.data, 
+                password=hashed_password)
+
+            try:
+                user.insert()
+                flash(f'Account created for: {form.username.data}!', 'success')
+                return redirect(url_for('home'))
+            except IntegrityError as e:
+                flash(f'Could not register! The entered username or email might be already taken', 'danger')
+                print('IntegrityError when trying to store new user')
+                # db.session.rollback()
+            
+        return render_template('registration.html', form=form)   
 ```
 
 With these bits you can hit /register on your browser against your running app and try out the registration page.
@@ -140,24 +231,123 @@ Try out your form, what happens if you do not fill all fields? Can you register 
 Content for the Login form class (you add it to ``forms.py``):
 
 ```
+class LoginForm(FlaskForm):
+    username = StringField(
+        'Username / Display Name',
+        validators=[
+            DataRequired()
+        ]
+    )
 
+    password = PasswordField(
+        'Password',
+        validators=[
+            DataRequired()
+        ]
+    )
+
+    remember = BooleanField('Remember me')
+
+    submit = SubmitField('Login')    
 ```
 
 You need a new template file, called ``login.html``:
 ```
-
+{% extends "layout.html" %}
+{% block body %}
+<div id="container">
+    <div class="content-section">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Login</legend>
+                <div class="form-group">
+                    {{ form.username.label(class="form-control-label") }}    
+                    {% if form.username.errors %}
+                    {{ form.username(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.username.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>  
+                    {% else %}    
+                        {{ form.username(class="form-control form-control-lg") }}
+                    {% endif %} 
+                </div>  
+                <div class="form-group">
+                    {{ form.password.label(class="form-control-label") }}      
+                    {% if form.password.errors %}
+                        {{ form.password(class="form-control form-control-lg is-invalid") }} 
+                        <div class="invalid-feedback">
+                            {% for error in form.password.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>  
+                    {% else %}    
+                        {{ form.password(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>      
+                <div class="form-check">
+                    {{ form.remember(class="form-check-input") }}
+                    {{ form.remember.label(class="form-check-label") }}
+                </div>       
+                <small class="text-muted ml-2">
+                    <a href="#">Forgot password?</a>
+                </small>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class='btn btn-outline-info')}}    
+            </div>
+        </form>
+    </div>
+    <div class="border-top pt-3">
+        <small class="text-muted">
+            You do not have an account? <a class="ml-2" href="{{ url_for('register')}}">Register</a>
+        </small>
+    </div>
+</div>    
+{% endblock body %}
 ```
 
-You need to add the code to handle the login, and also the logout routes in your ``app.py``:
+You need to add the code to handle the login, and also the loading of an user and logout routes in your ``app.py``:
 (In the previous step we had created a stub method for login, replace that now with the actual implementation)
 ```
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.get_by_id(user_id)           
 
+    @app.route("/login", methods=['GET', 'POST'])
+    def login():
+        # Sanity check: if the user is already authenticated then go back to home page
+        # if current_user.is_authenticated:
+        #    return redirect(url_for('home'))
+
+        form = LoginForm()
+        if form.validate_on_submit():
+            user = User.query.filter_by(display_name=form.username.data).first()
+            hashed_input_password = hashlib.md5(form.password.data.encode()).hexdigest()
+            if user and user.password == hashed_input_password:
+                login_user(user, remember=form.remember.data)
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('home'))
+            else:
+                flash('Login Unsuccessful. Please check user name and password', 'danger')
+        return render_template('login.html', title='Login', form=form) 
+
+    @app.route("/logout")
+    @login_required
+    def logout():
+        logout_user()
+        flash(f'You have logged out!', 'success')
+        return redirect(url_for('home'))   
 ```
 
 Again, there is some additional classes to import at the top of the file:
 ```
 from forms import NewLocationForm, RegistrationForm, LoginForm
-from flask_login import login_user, LoginManager
+from models import User
+from sqlalchemy.exc import IntegrityError
+from flask_login import login_user, logout_user, login_required, current_user, login_manager, LoginManager
 ```
 
 Also, because we are using flask_login, we need to initialize a LoginManager at the app level. 
@@ -180,7 +370,63 @@ Also, if the user is not logged in we will show the login / register links in na
 Modify the NavBar in ``map.html`` template so it looks like this:
 
 ```
+{% extends "layout.html" %}
+{% block head %}
+  <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css"> 
+  <script src="https://js.arcgis.com/4.24/"></script>
+  <script src="{{ url_for('static', filename='map.js') }}"></script>
+  <script>
+    require(["esri/config","esri/Map", "esri/views/MapView", "esri/Graphic",
+    "esri/layers/GraphicsLayer", "esri/core/reactiveUtils", "esri/geometry/Circle", "esri/rest/locator"], function (esriConfig,Map, MapView, Graphic, GraphicsLayer, reactiveUtils, Circle, locator) {
+      esriConfig.apiKey = "{{map_key}}";
+      initMap(esriConfig,Map, MapView, Graphic, GraphicsLayer, reactiveUtils, Circle, locator);
+    });
+  </script>
+{% endblock %}
+{% block body %}
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <span class="navbar-brand mb-0 h1">Navbar</span>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>    
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      {% if current_user.is_authenticated %}
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <span class="nav-link text-reset">Hi {{ current_user.display_name }}!</span>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('new_location') }}">New Location</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </li>      
+      </ul>    
+      {% else %}
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('register') }}">New User Registration</a>
+        </li>
+      </ul>     
+      {% endif %}
+      <form method="GET" action="" onsubmit="return searchAddressSubmit()" class="form-inline my-2 my-lg-0">
+        <input class="form-control mr-sm-2" id="search_address" type="search" placeholder="Search near..." aria-label="Search near">
+        <button class="btn btn-info my-2 my-sm-0" type="submit">Search</button>
+      </form>   
+    </div>
+  </nav>
+  <div id="viewDiv"></div>
+{% endblock %}
+```
 
+There are also a small additional style (this goes in ``styles.css``):
+```
+.navbar li.nav-item {
+  color: #fff;    
+}
 ```
 
 Add the @login_required annotation to the new_location route (the line in the middle):
@@ -279,6 +525,11 @@ def insert_sample_locations():
     )
     loc3.user = admin_user # <<<
     loc3.insert()
+```
+
+You also need this new import at the top of the ``models.py``:
+```
+import hashlib
 ```
 
 The code to create a new location in the db needs to change slightly to add the relation between location and current logged in user:
